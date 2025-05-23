@@ -1,0 +1,35 @@
+name: Generate new and changed policies
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  get_changed_files:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }}
+    - name: setup python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.13
+    - run: |
+    - name: Get changed files
+      id: changed_files
+      run: |
+        git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+        updated_policies=$(python3 environment/pipeline_scripts/get_changed_files.py --base-ref "origin/${{ github.base_ref }}")
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add -A
+        git commit -m "$(cat <<EOF
+        Generated markdown files
+
+        $updated_policies
+        EOF
+        )"
+        git push
