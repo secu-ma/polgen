@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "author": "Olivier Sels",
+    "company_name": "Secuma",
+    "updated_date": "23-05-2025",
+    "status": "draft"
+  },
+  "context": {
+    "company_name": "Secuma",
+    "company_size": "10 - 25",
+    "technology_stack": "Ubuntu, GitHub, AWS, Azure"
+  },
+  "policy": {
+    "name": "Information Security policy",
+    "framework_requirements": [
+      "CyberFundamentals - ID.GV-1: Organizational cybersecurity policy is established and communicated.\nPolicies and procedures for information security and cyber security shall be created,\ndocumented, reviewed, approved, and updated when changes occur.\nGuidance\n• Policies and procedures used to identify acceptable practices and expectations for business operations,\ncan be used to train new employees on your information security expectations, and can aid an\ninvestigation in case of an incident. These policies and procedures should be readily accessible to\nemployees.\n• Policies and procedures for information- and cybersecurity should clearly describe your expectations for\nprotecting the organization’s information and systems, and how management expects the company’s\nresources to be used and protected by all employees.\n• Policies and procedures should be reviewed and updated at least annually and every time there are\nchanges in the organization or technology. Whenever the policies are changed, employees should be\nmade aware of the changes.\nReferences\nCIS Controls V8 (ETSI TR 103 305 1 V4.1.1), Critical Security Control 14\nIEC 62443-2-1:2010, Clause 4.3.2.6\nISO/IEC 27001:2022 (NBN ISO/IEC 27001:2023), Clause 4, 5, 7.5, Annex A (see ISO 27002)\nISO/IEC 27002:2022 (NBN EN ISO/IEC 27002:2022), Control 5.1",
+      "CyberFundamentals - ID.GV-4: Governance and risk management processes address cybersecurity risks.\nAs part of the company's overall risk management, a comprehensive strategy to manage\ninformation security and cybersecurity risks shall be developed and updated when changes\noccur.\nGuidance\nThis strategy should include determining and allocating the required resources to protect the organization’s\nbusiness-critical assets.\nReferences\nIEC 62443-2-1:2010, Clause 4.2.3, 4.4.3.7\nISO/IEC 27001:2022 (NBN ISO/IEC 27001:2023), Clause 6"
+    ],
+    "requirements": [
+      "The information security policy should be ISO 27001 compliant",
+      "Roles and responsibilities appropriate to the company size are defined in the policy",
+      "Too much detail is not necessary for this policy. Keep it high-level."
+    ]
+  }
+}
