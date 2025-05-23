@@ -97,9 +97,8 @@ def main(base_ref):
         md = generate_markdown(system, policy)
         policies_markdown[policy] = md
 
-    # TODO: Checkout the correct branch to create a new commit
     for policy_name, markdown in policies_markdown.items():
-        markdown_path = os.path.join("src", "content", "docs", policy_name)
+        markdown_path = os.path.join("wiki", "src", "content", "docs", policy_name)
         root, ext = os.path.splitext(markdown_path)
         if ext == ".json":
             markdown_path = root + ".md"
@@ -111,7 +110,6 @@ def main(base_ref):
             f.write(markdown)
         logger.info(f"Updated markdown file {markdown_path}")
         print(policy_name)
-    # TODO: Push as new commit to PR
 
 
 if __name__ == "__main__":

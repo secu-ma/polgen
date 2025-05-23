@@ -3,6 +3,8 @@ name: Generate new and changed policies
 on:
   pull_request:
     branches: [ main ]
+    paths:
+      - 'policies/**'
 
 jobs:
   get_changed_files:
