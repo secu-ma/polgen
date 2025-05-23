@@ -17,19 +17,24 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: 3.13
-    - run: |
     - name: Get changed files
       id: changed_files
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
         git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
         updated_policies=$(python3 environment/pipeline_scripts/get_changed_files.py --base-ref "origin/${{ github.base_ref }}")
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add -A
-        git commit -m "$(cat <<EOF
-        Generated markdown files
+        if [ -z "${updated_policies}" ]; then
+          echo "No policies updated."
+        else
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "$(cat <<EOF
+          Generated markdown files
 
-        $updated_policies
+          $updated_policies
         EOF
-        )"
-        git push
+          )"
+          git push
+        fi

@@ -10,6 +10,9 @@ logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger()
 
 
+ai_service = None
+
+
 def get_changed_files(base_ref: str) -> list[str]:
     try:
         result = subprocess.run(["git", "diff", "--name-only", base_ref], check=True, capture_output=True, text=True)
@@ -28,8 +31,58 @@ def get_system_prompt():
         return f.read()
 
 
+class GoogleGenAI:
+    def __init__(self):
+        try:
+            from google import genai
+            from google.genai import types
+        except ImportError:
+            logger.info("Installing Google genai")
+            # Dynamic installation of google genai library
+            subprocess.run(["pip", "install", "google-genai==1.16.1"], check=True, capture_output=True, text=True)
+            from google import genai
+            from google.genai import types
+            logger.info("Google genai library installed")
+        self.model = "gemini-2.5-flash-preview-05-20"
+        self.client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+        self.genai = genai
+        self.types = types
+
+    def generate(self, system, policy):
+        generate_content_config = self.types.GenerateContentConfig(
+            response_mime_type="text/plain",
+            system_instruction=[
+                self.types.Part.from_text(text=system)
+            ]
+        )
+        contents = [
+            self.types.Content(
+                role="user",
+                parts=[
+                    self.types.Part.from_text(text=policy),
+                ],
+            ),
+        ]
+        document = ""
+        for chunk in self.client.models.generate_content_stream(
+            model=self.model,
+            contents=contents,
+            config=generate_content_config,
+        ):
+            document += chunk.text
+        return document
+
+def get_ai_service():
+    # TODO: Read from config which genai service to use
+    global ai_service
+    if ai_service is None:
+        ai_service = GoogleGenAI()
+    return ai_service
+
+
 def generate_markdown(system, policy):
-    return "# Some test"
+    ai_client = get_ai_service()
+    return ai_client.generate(system, policy)
 
 
 def main(base_ref):
@@ -47,6 +100,9 @@ def main(base_ref):
     # TODO: Checkout the correct branch to create a new commit
     for policy_name, markdown in policies_markdown.items():
         markdown_path = os.path.join("src", "content", "docs", policy_name)
+        root, ext = os.path.splitext(markdown_path)
+        if ext == ".json":
+            markdown_path = root + ".md"
         if os.path.exists(markdown_path):
             logger.info("Resulting markdown file already exists")
         else:
