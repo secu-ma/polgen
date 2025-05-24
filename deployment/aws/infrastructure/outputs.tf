@@ -1,0 +1,20 @@
+output "cloudfront_domain" {
+  value = "https://${aws_cloudfront_distribution.wiki_distribution.domain_name}"
+  description = "The domain where your wiki is deployed"
+}
+
+output "cognito" {
+  value = {
+    region = data.aws_region.current.name
+    userPoolId = aws_cognito_user_pool.auth_pool.id
+    userPoolAppId = aws_cognito_user_pool_client.wiki_client.id
+    userPoolDomain = "${aws_cognito_user_pool_domain.auth_domain.domain}.auth.${data.aws_region.current.name}.amazoncognito.com"
+  }
+  description = "The Cognito config"
+}
+
+output "cognito_client_secret" {
+  value = aws_cognito_user_pool_client.wiki_client.client_secret
+  description = "The Cognito client secret"
+  sensitive = true
+}
