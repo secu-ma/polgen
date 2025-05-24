@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'policies/**'
+      - '.github/workflows/generate-changed-policies.yml'
 
 jobs:
   get_changed_files:
