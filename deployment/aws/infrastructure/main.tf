@@ -5,6 +5,11 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "s3" {
+    bucket = var.state_bucket != "" ? var.state_bucket : "wiki-${substr(sha256(var.unique_seed), 0, 16)}"
+    key = var.state_key != "" ? var.state_key : "terraform.tfstate"
+  }
 }
 
 # Let the default provider be configured with environment variables from the workflow:

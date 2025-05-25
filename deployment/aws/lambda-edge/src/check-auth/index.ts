@@ -1,13 +1,19 @@
 import {CloudFrontRequestHandler} from "aws-lambda";
-import {getAuthenticatorParams} from "../shared/shared";
-import {Authenticator} from "cognito-at-edge";
+import {Authenticator, AuthenticatorParams} from "cognito-at-edge";
+import {readFileSync} from "fs";
+
+function getAuthenticatorParams(): AuthenticatorParams {
+  return JSON.parse(
+    readFileSync(`${__dirname}/config.json`).toString("utf8")
+  ) as AuthenticatorParams;
+}
 
 const authenticatorParams = getAuthenticatorParams();
-if (["debug", "trace"].includes(authenticatorParams.logLevel || "info")) {
-  console.debug("Authenticator params:", authenticatorParams);
-}
 if (["info", "debug", "trace"].includes(authenticatorParams.logLevel || "info")) {
   console.info("Started lambda check-auth");
+}
+if (["debug", "trace"].includes(authenticatorParams.logLevel || "info")) {
+  console.debug("Authenticator params:", authenticatorParams);
 }
 
 export const handler: CloudFrontRequestHandler = async (event) => {

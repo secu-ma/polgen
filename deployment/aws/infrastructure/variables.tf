@@ -1,3 +1,25 @@
+variable "unique_seed" {
+  type = string
+  default = ""
+  description = "A unique seed for this specific wiki instance. Used by some resources that require a unique name such as the state backend S3 bucket."
+}
+
+variable "state_bucket" {
+  type = string
+  default = ""
+  description = "The name of the bucket where Tofu state will be stored"
+  validation {
+    condition = var.state_bucket != "" || var.unique_seed != ""
+    error_message = "Either provide state_bucket or unique_seed variable"
+  }
+}
+
+variable "state_key" {
+  type = string
+  default = ""
+  description = "The key where Tofu state will be stored"
+}
+
 variable "custom_domain" {
   type = string
   default = ""
