@@ -18,3 +18,8 @@ output "cognito_client_secret" {
   description = "The Cognito client secret"
   sensitive = true
 }
+
+output "wiki_bucket" {
+  value = aws_s3_bucket.wiki.bucket
+  description = "The bucket name where the wiki content is stored"
+}
