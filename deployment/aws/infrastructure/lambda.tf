@@ -2,7 +2,7 @@ data "archive_file" "check_auth_archive" {
   type        = "zip"
   output_path = "/tmp/check_auth_archive.zip"
   source {
-    content = <<EOF
+    content  = <<EOF
 
 exports.handler = (event, context, callback) => {
   const response = {
@@ -32,8 +32,8 @@ resource "aws_lambda_function" "check_auth" {
   provider = aws.us-east-1
 
   function_name = "wiki-check-auth"
-  role = aws_iam_role.edge_lambda_role.arn
-  runtime = "nodejs20.x"
+  role          = aws_iam_role.edge_lambda_role.arn
+  runtime       = "nodejs20.x"
   handler       = "bundle.handler"
 
   filename         = data.archive_file.check_auth_archive.output_path

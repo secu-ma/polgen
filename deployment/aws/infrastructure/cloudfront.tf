@@ -1,13 +1,13 @@
 resource "aws_cloudfront_distribution" "wiki_distribution" {
-  enabled = true
-  is_ipv6_enabled = true
+  enabled             = true
+  is_ipv6_enabled     = true
   default_root_object = "index.html"
-  aliases = var.custom_domain != "" ? [var.custom_domain] : []
-  price_class = "PriceClass_100"
+  aliases             = var.custom_domain != "" ? [var.custom_domain] : []
+  price_class         = "PriceClass_100"
 
   origin {
-    domain_name = aws_s3_bucket.wiki.bucket_domain_name
-    origin_id   = "s3-wiki"
+    domain_name              = aws_s3_bucket.wiki.bucket_domain_name
+    origin_id                = "s3-wiki"
     origin_access_control_id = aws_cloudfront_origin_access_control.s3_access.id
   }
 
@@ -16,7 +16,7 @@ resource "aws_cloudfront_distribution" "wiki_distribution" {
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "s3-wiki"
     viewer_protocol_policy = "redirect-to-https"
-    compress = true
+    compress               = true
 
     cache_policy_id = aws_cloudfront_cache_policy.wiki_cache_policy.id
 
@@ -38,9 +38,9 @@ resource "aws_cloudfront_distribution" "wiki_distribution" {
 
   custom_error_response {
     error_caching_min_ttl = 10
-    error_code = 404
-    response_code = 404
-    response_page_path = "/404.html"
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/404.html"
   }
 
 
@@ -68,7 +68,7 @@ resource "aws_cloudfront_cache_policy" "wiki_cache_policy" {
     query_strings_config {
       query_string_behavior = "none"
     }
-    enable_accept_encoding_gzip = true
+    enable_accept_encoding_gzip   = true
     enable_accept_encoding_brotli = true
   }
 }

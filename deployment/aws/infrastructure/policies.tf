@@ -14,7 +14,7 @@ data "aws_iam_policy_document" "wiki_bucket_policy" {
     }
 
     condition {
-      test     = "StringEquals"
+      test = "StringEquals"
       values = [
         aws_cloudfront_distribution.wiki_distribution.arn
       ]
@@ -45,7 +45,7 @@ data "aws_iam_policy_document" "lambda_assume_role" {
     effect = "Allow"
 
     principals {
-      type        = "Service"
+      type = "Service"
       identifiers = [
         "lambda.amazonaws.com",
         "edgelambda.amazonaws.com",
