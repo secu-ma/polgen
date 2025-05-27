@@ -1,3 +1,10 @@
+### Custom gitignore
+
+deployment/aws/lambda-edge/src/**/bundle.js*
+
+### End custom gitignore
+
+
 # build output
 dist/
 # generated types

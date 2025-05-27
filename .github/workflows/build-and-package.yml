@@ -3,9 +3,6 @@ name: Build and Test Astro Site
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'wiki/**'
-      - '.github/workflows/build-and-package.yml'
 
 defaults:
   run:
@@ -13,8 +10,9 @@ defaults:
 
 
 jobs:
-  build:
+  build_wiki:
     runs-on: ubuntu-latest
+    name: "Build the Wiki"
 
     steps:
     - name: Checkout repository
@@ -36,7 +34,7 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: dist
+        name: wiki
         path: wiki/dist/
         retention-days: 7
 
@@ -45,6 +43,46 @@ jobs:
       with:
         path: |
           ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        key: wiki-${{ runner.os }}-node-${{ hashFiles('wiki/**/package-lock.json') }}
         restore-keys: |
-          ${{ runner.os }}-node-
+          wiki-${{ runner.os }}-node-
+
+  build_edge_lambda:
+    runs-on: ubuntu-latest
+    name: "Build the Lambda@Edge code"
+    defaults:
+      run:
+        working-directory: ./deployment/aws/lambda-edge/
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './deployment/aws/lambda-edge/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-edge
+          path: ./deployment/aws/lambda-edge/src/**/bundle.js
+          retention-days: 7
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+          key: lambda-edge-${{ runner.os }}-node-${{ hashFiles('deployment/aws/lambda-edge/**/package-lock.json') }}
+          restore-keys: |
+            lambda-edge-${{ runner.os }}-node-
