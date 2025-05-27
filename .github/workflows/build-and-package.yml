@@ -1,4 +1,4 @@
-name: Build and Test Astro Site
+name: Build and deploy
 
 on:
   push:
@@ -86,3 +86,73 @@ jobs:
           key: lambda-edge-${{ runner.os }}-node-${{ hashFiles('deployment/aws/lambda-edge/**/package-lock.json') }}
           restore-keys: |
             lambda-edge-${{ runner.os }}-node-
+
+  plan_tofu:
+    runs-on: ubuntu-latest
+    name: "Plan the OpenTofu infrastructure upgrade"
+    defaults:
+      run:
+        working-directory: ./deployment/aws/infrastructure/
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_wrapper: false
+
+      - name: OpenTofu Init
+        run: tofu init
+
+      - name: OpenTofu Plan
+        id: plan
+        run: tofu plan -no-color -out=tfplan
+
+      - name: Upload Tofu plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: ./deployment/aws/infrastructure/tfplan
+          retention-days: 7
+
+  deploy_aws:
+    runs-on: ubuntu-latest
+    name: "Deploy the infrastructure and artifacts to AWS"
+    needs: [build_wiki, build_edge_lambda, plan_tofu]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: ./repo
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_wrapper: true
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          cache: 'pip'
+
+      - name: Install boto3
+        run: pip install boto3
+
+      - name: OpenTofu Init
+        run: tofu init
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: wiki, lambda-edge, tfplan
+
+      - name: Apply Tofu plan
+        id: tofu_apply
+        run: |
+          tofu apply tfplan
+
+      - name: Deploy Lambda@Edge and Wiki
+        run: |
+          echo "${{ steps.tofu_apply.outputs }}"
+          python3 ./repo/deployment/aws/deploy.py  # TODO Add all variables required to deploy

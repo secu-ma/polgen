@@ -80,11 +80,3 @@ resource "aws_cloudfront_origin_access_control" "s3_access" {
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
-
-resource "aws_cloudfront_function" "default_dir_object" {
-  name    = "default_dir_object"
-  runtime = "cloudfront-js-2.0"
-  comment = "Replaces cloudfront subdir / requests with /index.html"
-  publish = true
-  code    = file("${path.module}/functions/default_dir_object.js")
-}
