@@ -174,5 +174,21 @@ jobs:
 
       - name: Deploy Lambda@Edge and Wiki
         run: |
-          echo "${{ steps.tofu_output.outputs.stdout }}"
-#          python3 ./repo/deployment/aws/deploy.py  # TODO Add all variables required to deploy
+          tofu_output=$(echo '${{ steps.tofu_output.outputs.stdout }}')
+          echo $tofu_output
+          user_pool_id=$(echo "$tofu_output" | jq -r .cognito.value.userPoolId)
+          user_pool_domain=$(echo "$tofu_output" | jq -r .cognito.value.userPoolDomain)
+          user_pool_app_id=$(echo "$tofu_output" | jq -r .cognito.value.userPoolAppId)
+          user_pool_app_secret=$(echo "$tofu_output" | jq -r .cognito_client_secret.value)
+          cloudfront_distribution_id=$(echo "$tofu_output" | jq -r .cloudfront.value.id)
+          wiki_bucket=$(echo "$tofu_output" | jq -r .wiki_bucket.value)
+          python3 ./repo/deployment/aws/deploy.py \
+            --cognito-region=$AWS_REGION \
+            --user-pool-id=$user_pool_id \
+            --user-pool-domain=$user_pool_domain \
+            --user-pool-app-id=$user_pool_app_id \
+            --user-pool-app-secret=$user_pool_app_secret \
+            --cloudfront-distribution-id=$cloudfront_distribution_id \
+            --wiki-bucket=$wiki_bucket \
+            --wiki-artifact-dir=$GITHUB_WORKSPACE/wiki/ \
+            --lambda-edge-artifact-dir=$GITHUB_WORKSPACE/lambda-edge/

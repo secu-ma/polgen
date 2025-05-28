@@ -29,21 +29,22 @@ def get_cloudfront_config(session, cloudfront_distribution_id):
     return distribution_config, etag
 
 
-def deploy_edge_lambdas(session_us_east_1, cognito_region, user_pool_id, user_pool_app_id, user_pool_app_secret, user_pool_domain, distribution_config, function_prefix="wiki-"):
+def deploy_edge_lambdas(session_us_east_1, cognito_region, user_pool_id, user_pool_app_id, user_pool_app_secret, user_pool_domain, distribution_config, function_prefix="wiki-", lambda_edge_artifact_dir=""):
     # Lambda@Edge always lives in us-east-1
     lambda_client = session_us_east_1.client('lambda')
 
-    # Build the lambda-edge project
-    subprocess.run(["npm", "run", "build"], cwd=os.path.join(CURRENT_DIR, 'lambda-edge'), check=True, capture_output=True)
+    if not lambda_edge_artifact_dir:
+        # Build the lambda-edge project
+        subprocess.run(["npm", "run", "build"], cwd=os.path.join(CURRENT_DIR, 'lambda-edge'), check=True, capture_output=True)
+        lambda_edge_artifact_dir = os.path.join(CURRENT_DIR, 'lambda-edge', 'src')
 
     # Deploy each lambda function (there is currently only one, but multiple is supported)
     nonce_signing_secret = secrets.token_urlsafe(64)
-    lambda_src_path = os.path.join(CURRENT_DIR, 'lambda-edge', 'src')
-    for root, dirs, files in os.walk(lambda_src_path):
+    for root, dirs, files in os.walk(lambda_edge_artifact_dir):
         if 'bundle.js' not in files:
             continue
 
-        relpath = os.path.relpath(root, lambda_src_path)
+        relpath = os.path.relpath(root, lambda_edge_artifact_dir)
         bundle_relpath = os.path.join(relpath, 'bundle.js')
         print("Creating deployment package for: ", bundle_relpath)
 
@@ -99,23 +100,24 @@ def get_current_wiki_version(distribution_config):
     return origin_path
 
 
-def deploy_s3_wiki(session, s3_bucket, distribution_config, build_path='../../wiki/dist'):
+def deploy_s3_wiki(session, s3_bucket, distribution_config, build_path='../../wiki/dist', wiki_artifact_dir=""):
     version_old = get_current_wiki_version(distribution_config)
     version_new = datetime.datetime.now().replace(microsecond=0).isoformat()
     print("Current wiki version:", version_old)
 
-    build_path_abs = os.path.abspath(os.path.join(CURRENT_DIR, build_path))
-    # Build Astro wiki
-    subprocess.run(["npm", "run", "build"], cwd=os.path.join(build_path_abs, ".."))
+    if not wiki_artifact_dir:
+        build_path_abs = os.path.abspath(os.path.join(CURRENT_DIR, build_path))
+        # Build Astro wiki
+        subprocess.run(["npm", "run", "build"], cwd=os.path.join(build_path_abs, ".."))
+        wiki_artifact_dir = build_path_abs
 
     # Upload build to S3 bucket as new version
     s3 = session.client('s3')
     print(f'Start S3 upload of version {version_new} to {s3_bucket}')
-    build_path_abs = os.path.abspath(os.path.join(CURRENT_DIR, build_path))
-    for root, dirs, files in os.walk(build_path_abs):
+    for root, dirs, files in os.walk(wiki_artifact_dir):
         for filename in files:
             local_path = os.path.join(root, filename)
-            relative_path = os.path.relpath(local_path, build_path_abs)
+            relative_path = os.path.relpath(local_path, wiki_artifact_dir)
             s3_path = os.path.join(version_new, relative_path)
             mimetype = mimetypes.guess_type(local_path)[0]
             extra_args = {}
@@ -169,7 +171,7 @@ def update_cloudfront(session, cloudfront_distribution_id, distribution_config, 
         print("Cloudfront invalidation done")
 
 
-def main(session, session_us_east_1, cognito_region, user_pool_id, user_pool_app_id, user_pool_app_secret, user_pool_domain, cloudfront_distribution_id, wiki_bucket, function_prefix="wiki-"):
+def main(session, session_us_east_1, cognito_region, user_pool_id, user_pool_app_id, user_pool_app_secret, user_pool_domain, cloudfront_distribution_id, wiki_bucket, function_prefix="wiki-", lambda_edge_artifact_dir="", wiki_artifact_dir=""):
     distribution_config, etag = get_cloudfront_config(session=session, cloudfront_distribution_id=cloudfront_distribution_id)
     distribution_config = deploy_edge_lambdas(
         session_us_east_1=session_us_east_1,
@@ -180,12 +182,14 @@ def main(session, session_us_east_1, cognito_region, user_pool_id, user_pool_app
         user_pool_domain=user_pool_domain,
         distribution_config=distribution_config,
         function_prefix=function_prefix,
+        lambda_edge_artifact_dir=lambda_edge_artifact_dir,
     )
-    # distribution_config = deploy_s3_wiki(
-    #     session=session,
-    #     s3_bucket=wiki_bucket,
-    #     distribution_config=distribution_config,
-    # )
+    distribution_config = deploy_s3_wiki(
+        session=session,
+        s3_bucket=wiki_bucket,
+        distribution_config=distribution_config,
+        wiki_artifact_dir=wiki_artifact_dir,
+    )
     update_cloudfront(
         session=session,
         cloudfront_distribution_id=cloudfront_distribution_id,
@@ -211,6 +215,8 @@ if __name__ == "__main__":
     parser.add_argument("--cloudfront-distribution-id", required=True)
     parser.add_argument("--wiki-bucket", required=True)
     parser.add_argument("--function-prefix", default="wiki-")
+    parser.add_argument("--wiki-artifact-dir", default="", required=False)
+    parser.add_argument("--lambda-edge-artifact-dir", default="", required=False)
     args = parser.parse_args()
 
     session = boto3.session.Session()
@@ -225,5 +231,7 @@ if __name__ == "__main__":
         user_pool_app_secret=args.user_pool_app_secret,
         cloudfront_distribution_id=args.cloudfront_distribution_id,
         wiki_bucket=args.wiki_bucket,
-        function_prefix=args.function_prefix
+        function_prefix=args.function_prefix,
+        lambda_edge_artifact_dir=args.lambda_edge_artifact_dir,
+        wiki_artifact_dir=args.wiki_artifact_dir,
     )
