@@ -93,6 +93,10 @@ jobs:
     defaults:
       run:
         working-directory: ./deployment/aws/infrastructure/
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -120,6 +124,10 @@ jobs:
     runs-on: ubuntu-latest
     name: "Deploy the infrastructure and artifacts to AWS"
     needs: [build_wiki, build_edge_lambda, plan_tofu]
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
