@@ -1,5 +1,8 @@
-output "cloudfront_domain" {
-  value       = "https://${aws_cloudfront_distribution.wiki_distribution.domain_name}"
+output "cloudfront" {
+  value = {
+    id = aws_cloudfront_distribution.wiki_distribution.id
+    domain = "https://${aws_cloudfront_distribution.wiki_distribution.domain_name}"
+  }
   description = "The domain where your wiki is deployed"
 }
 

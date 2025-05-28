@@ -4,15 +4,15 @@ on:
   push:
     branches: [ main ]
 
-defaults:
-  run:
-    working-directory: './wiki'
-
 
 jobs:
   build_wiki:
     runs-on: ubuntu-latest
     name: "Build the Wiki"
+    defaults:
+      run:
+        working-directory: ./wiki
+
 
     steps:
     - name: Checkout repository
@@ -111,7 +111,14 @@ jobs:
 
       - name: OpenTofu Plan
         id: plan
-        run: tofu plan -no-color -out=tfplan -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}"
+        run: |
+          {
+            cloudfront_id=$(tofu output -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}" -json cloudfront | jq .id -r)
+            origin_path=$(aws cloudfront get-distribution-config --id $cloudfront_id --output=json | jq .DistributionConfig.Origins.Items[0].OriginPath -r)
+          } || {
+            origin_path=""
+          }
+          tofu plan -no-color -out=tfplan -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}" -var="origin_path=$origin_path" -var="email=${{ vars.COGNITO_USER_EMAIL }}"
 
       - name: Upload Tofu plan
         uses: actions/upload-artifact@v4
@@ -142,25 +149,30 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v5
         with:
-          cache: 'pip'
+          python-version: '3.13'
 
       - name: Install boto3
         run: pip install boto3
 
       - name: OpenTofu Init
+        working-directory: ./repo/deployment/aws/infrastructure/
         run: tofu init -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}"
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
-        with:
-          artifact-ids: wiki, lambda-edge, tfplan
 
       - name: Apply Tofu plan
-        id: tofu_apply
+        working-directory: ./repo/deployment/aws/infrastructure/
         run: |
-          tofu apply tfplan
+          tofu apply $GITHUB_WORKSPACE/tfplan/tfplan
+
+      - name: Show Tofu Outputs
+        id: tofu_output
+        working-directory: ./repo/deployment/aws/infrastructure/
+        run: |
+          tofu output -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}" -json
 
       - name: Deploy Lambda@Edge and Wiki
         run: |
-          echo "${{ steps.tofu_apply.outputs }}"
-          python3 ./repo/deployment/aws/deploy.py  # TODO Add all variables required to deploy
+          echo "${{ steps.tofu_output.outputs.stdout }}"
+#          python3 ./repo/deployment/aws/deploy.py  # TODO Add all variables required to deploy

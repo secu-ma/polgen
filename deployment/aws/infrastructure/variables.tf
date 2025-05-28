@@ -36,3 +36,9 @@ variable "email" {
     error_message = "Please provide a valid email address."
   }
 }
+
+variable "origin_path" {
+  type = string
+  default = ""
+  description = "The path at S3 where the wiki app is deployed. Root if omitted."
+}

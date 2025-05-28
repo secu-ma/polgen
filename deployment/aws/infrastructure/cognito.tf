@@ -35,4 +35,10 @@ resource "aws_cognito_user" "default_user" {
     email          = var.email
     email_verified = false
   }
+
+  lifecycle {
+    ignore_changes = [
+      attributes["email_verified"]
+    ]
+  }
 }
