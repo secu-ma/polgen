@@ -107,11 +107,11 @@ jobs:
           tofu_wrapper: false
 
       - name: OpenTofu Init
-        run: tofu init -var="unique_seed=${{ github.repositor }}/${{ github.ref_name }}"
+        run: tofu init -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}"
 
       - name: OpenTofu Plan
         id: plan
-        run: tofu plan -no-color -out=tfplan -var="unique_seed=${{ github.repositor }}/${{ github.ref_name }}"
+        run: tofu plan -no-color -out=tfplan -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}"
 
       - name: Upload Tofu plan
         uses: actions/upload-artifact@v4
@@ -148,7 +148,7 @@ jobs:
         run: pip install boto3
 
       - name: OpenTofu Init
-        run: tofu init -var="unique_seed=${{ github.repositor }}/${{ github.ref_name }}"
+        run: tofu init -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}"
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
