@@ -8,7 +8,7 @@ on:
       - '.github/workflows/generate-changed-policies.yml'
 
 jobs:
-  get_changed_files:
+  update_policies:
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -20,13 +20,31 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: 3.13
-    - name: Get changed files
-      id: changed_files
+    - name: Warn about GEMINI_API_KEY secret
+      uses: actions/github-script@v7
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      if: ${{ env.GEMINI_API_KEY == ''}}
+      with:
+        script: |
+          const message = `### ⚠️  You haven't configured a Gemini API key.
+
+          You should add an API key as a repository **secret**:
+          [Using secrets in GitHub Actions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions)
+          `
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: message,
+          })
+    - name: Update policies
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      if: ${{ env.GEMINI_API_KEY != ''}}
       run: |
         git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
-        updated_policies=$(python3 environment/pipeline_scripts/get_changed_files.py --base-ref "origin/${{ github.base_ref }}")
+        updated_policies=$(python3 deployment/update_policies.py --base-ref "origin/${{ github.base_ref }}")
         if [ -z "${updated_policies}" ]; then
           echo "No policies updated."
         else
