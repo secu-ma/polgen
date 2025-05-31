@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-latest
+    if: github.event.pull_request.repository == github.repository
     steps:
     - uses: actions/checkout@v4
       with:
@@ -38,10 +39,11 @@ jobs:
             repo: context.repo.repo,
             body: message,
           })
+
+          throw new Error("You haven't configured a Gemini API key.")
     - name: Update policies
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      if: ${{ env.GEMINI_API_KEY != ''}}
       run: |
         git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
         updated_policies=$(python3 deployment/update_policies.py --base-ref "origin/${{ github.base_ref }}")
