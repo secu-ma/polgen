@@ -2,6 +2,7 @@
   "name": "deployment-build",
   "version": "0.0.1",
   "description": "Builds lambda@edge functions that protect the Wiki using Cognito",
+  "license": "MPL-2.0",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Sorry, there aren't any tests\"; exit 1",

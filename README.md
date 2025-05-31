@@ -52,3 +52,6 @@ View our demo deployment at https://example.com.
 ## License
 
 This project is licensed under the terms of the [MPL 2.0](https://www.mozilla.org/MPL/) license.
+
+Wiki based on the [Astro Starlight](https://github.com/withastro/starlight/) theme under the MIT license.  
+Copyright (c) 2023 [Astro contributors](https://github.com/withastro/starlight/graphs/contributors).
