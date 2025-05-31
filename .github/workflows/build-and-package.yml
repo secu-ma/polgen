@@ -144,7 +144,7 @@ jobs:
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
         with:
-          tofu_wrapper: true
+          tofu_wrapper: false
 
       - name: Install Python
         uses: actions/setup-python@v5
@@ -170,25 +170,31 @@ jobs:
         id: tofu_output
         working-directory: ./repo/deployment/aws/infrastructure/
         run: |
-          tofu output -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}" -json
-
-      - name: Deploy Lambda@Edge and Wiki
-        run: |
-          echo "::add-mask::${{ steps.tofu_output.outputs.stdout }}"
-          tofu_output=$(echo '${{ steps.tofu_output.outputs.stdout }}')
+          tofu_output=$(tofu output -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}" -json)
           user_pool_id=$(echo "$tofu_output" | jq -r .cognito.value.userPoolId)
           user_pool_domain=$(echo "$tofu_output" | jq -r .cognito.value.userPoolDomain)
           user_pool_app_id=$(echo "$tofu_output" | jq -r .cognito.value.userPoolAppId)
           user_pool_app_secret=$(echo "$tofu_output" | jq -r .cognito_client_secret.value)
+          echo "::add-mask::$user_pool_app_secret"
           cloudfront_distribution_id=$(echo "$tofu_output" | jq -r .cloudfront.value.id)
           wiki_bucket=$(echo "$tofu_output" | jq -r .wiki_bucket.value)
+          echo "user_pool_id=$user_pool_id" >> "$GITHUB_OUTPUT"
+          echo "user_pool_domain=$user_pool_domain" >> "$GITHUB_OUTPUT"
+          echo "user_pool_app_id=$user_pool_app_id" >> "$GITHUB_OUTPUT"
+          echo "user_pool_app_secret=$user_pool_app_secret" >> "$GITHUB_OUTPUT"
+          echo "cloudfront_distribution_id=$cloudfront_distribution_id" >> "$GITHUB_OUTPUT"
+          echo "wiki_bucket=$wiki_bucket" >> "$GITHUB_OUTPUT"
+
+
+      - name: Deploy Lambda@Edge and Wiki
+        run: |
           python3 ./repo/deployment/aws/deploy.py \
             --cognito-region=$AWS_REGION \
-            --user-pool-id=$user_pool_id \
-            --user-pool-domain=$user_pool_domain \
-            --user-pool-app-id=$user_pool_app_id \
-            --user-pool-app-secret=$user_pool_app_secret \
-            --cloudfront-distribution-id=$cloudfront_distribution_id \
-            --wiki-bucket=$wiki_bucket \
+            --user-pool-id=${{ steps.tofu_output.outputs.user_pool_id }} \
+            --user-pool-domain=${{ steps.tofu_output.outputs.user_pool_domain }} \
+            --user-pool-app-id=${{ steps.tofu_output.outputs.user_pool_app_id }} \
+            --user-pool-app-secret=${{ steps.tofu_output.outputs.user_pool_app_secret }} \
+            --cloudfront-distribution-id=${{ steps.tofu_output.outputs.cloudfront_distribution_id }} \
+            --wiki-bucket=${{ steps.tofu_output.outputs.wiki_bucket }} \
             --wiki-artifact-dir=$GITHUB_WORKSPACE/wiki/ \
             --lambda-edge-artifact-dir=$GITHUB_WORKSPACE/lambda-edge/
