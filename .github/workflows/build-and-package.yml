@@ -174,8 +174,8 @@ jobs:
 
       - name: Deploy Lambda@Edge and Wiki
         run: |
+          echo "::add-mask::${{ steps.tofu_output.outputs.stdout }}"
           tofu_output=$(echo '${{ steps.tofu_output.outputs.stdout }}')
-          echo $tofu_output
           user_pool_id=$(echo "$tofu_output" | jq -r .cognito.value.userPoolId)
           user_pool_domain=$(echo "$tofu_output" | jq -r .cognito.value.userPoolDomain)
           user_pool_app_id=$(echo "$tofu_output" | jq -r .cognito.value.userPoolAppId)
