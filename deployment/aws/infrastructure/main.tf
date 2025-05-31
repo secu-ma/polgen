@@ -2,6 +2,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+locals {
+  seed_prefix = substr(sha256(var.unique_seed), 0, 16)
+}
+
 terraform {
   required_providers {
     aws = {
@@ -11,7 +15,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = var.state_bucket != "" ? var.state_bucket : "state-${substr(sha256(var.unique_seed), 0, 16)}"
+    bucket = var.state_bucket != "" ? var.state_bucket : "state-${local.seed_prefix}"
     key    = var.state_key != "" ? var.state_key : "terraform.tfstate"
   }
 }

@@ -11,7 +11,7 @@ resource "aws_cognito_user_pool" "auth_pool" {
 }
 
 resource "aws_cognito_user_pool_domain" "auth_domain" {
-  domain       = "auth-domain"
+  domain       = "polgen-${local.seed_prefix}"
   user_pool_id = aws_cognito_user_pool.auth_pool.id
 }
 
