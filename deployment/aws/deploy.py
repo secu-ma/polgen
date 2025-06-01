@@ -34,7 +34,7 @@ def get_cloudfront_config(session, cloudfront_distribution_id):
     return distribution_config, etag
 
 
-def deploy_edge_lambdas(session_us_east_1, cognito_region, user_pool_id, user_pool_app_id, user_pool_app_secret, user_pool_domain, distribution_config, function_prefix="wiki-", lambda_edge_artifact_dir=""):
+def deploy_edge_lambdas(session_us_east_1, cognito_region, user_pool_id, user_pool_app_id, user_pool_app_secret, user_pool_domain, distribution_config, function_prefix="wiki-", function_postfix="", lambda_edge_artifact_dir=""):
     # Lambda@Edge always lives in us-east-1
     lambda_client = session_us_east_1.client('lambda')
 
@@ -73,7 +73,7 @@ def deploy_edge_lambdas(session_us_east_1, cognito_region, user_pool_id, user_po
 
         print("Deploying to lambda...")
         result = lambda_client.update_function_code(
-            FunctionName=f"{function_prefix}{relpath.split('/')[-1]}",
+            FunctionName=f"{function_prefix}{relpath.split('/')[-1]}{function_postfix}",
             ZipFile=zip_buffer.read(),
             Publish=True,
         )
@@ -176,7 +176,7 @@ def update_cloudfront(session, cloudfront_distribution_id, distribution_config, 
         print("Cloudfront invalidation done")
 
 
-def main(session, session_us_east_1, cognito_region, user_pool_id, user_pool_app_id, user_pool_app_secret, user_pool_domain, cloudfront_distribution_id, wiki_bucket, function_prefix="wiki-", lambda_edge_artifact_dir="", wiki_artifact_dir=""):
+def main(session, session_us_east_1, cognito_region, user_pool_id, user_pool_app_id, user_pool_app_secret, user_pool_domain, cloudfront_distribution_id, wiki_bucket, function_prefix="wiki-", function_postfix="", lambda_edge_artifact_dir="", wiki_artifact_dir=""):
     distribution_config, etag = get_cloudfront_config(session=session, cloudfront_distribution_id=cloudfront_distribution_id)
     distribution_config = deploy_edge_lambdas(
         session_us_east_1=session_us_east_1,
@@ -187,6 +187,7 @@ def main(session, session_us_east_1, cognito_region, user_pool_id, user_pool_app
         user_pool_domain=user_pool_domain,
         distribution_config=distribution_config,
         function_prefix=function_prefix,
+        function_postfix=function_postfix,
         lambda_edge_artifact_dir=lambda_edge_artifact_dir,
     )
     distribution_config = deploy_s3_wiki(
@@ -220,6 +221,7 @@ if __name__ == "__main__":
     parser.add_argument("--cloudfront-distribution-id", required=True)
     parser.add_argument("--wiki-bucket", required=True)
     parser.add_argument("--function-prefix", default="wiki-")
+    parser.add_argument("--function-postfix", default="")
     parser.add_argument("--wiki-artifact-dir", default="", required=False)
     parser.add_argument("--lambda-edge-artifact-dir", default="", required=False)
     args = parser.parse_args()
@@ -237,6 +239,7 @@ if __name__ == "__main__":
         cloudfront_distribution_id=args.cloudfront_distribution_id,
         wiki_bucket=args.wiki_bucket,
         function_prefix=args.function_prefix,
+        function_postfix=args.function_postfix,
         lambda_edge_artifact_dir=args.lambda_edge_artifact_dir,
         wiki_artifact_dir=args.wiki_artifact_dir,
     )

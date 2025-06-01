@@ -196,6 +196,7 @@ jobs:
 
       - name: Deploy Lambda@Edge and Wiki
         run: |
+          postfix=$(echo -n ${{ github.repository }}/${{ github.ref_name }} | sha256sum | cut -c1-16)
           python3 ./repo/deployment/aws/deploy.py \
             --cognito-region=$AWS_REGION \
             --user-pool-id=${{ steps.tofu_output.outputs.user_pool_id }} \
@@ -205,4 +206,5 @@ jobs:
             --cloudfront-distribution-id=${{ steps.tofu_output.outputs.cloudfront_distribution_id }} \
             --wiki-bucket=${{ steps.tofu_output.outputs.wiki_bucket }} \
             --wiki-artifact-dir=$GITHUB_WORKSPACE/wiki/ \
-            --lambda-edge-artifact-dir=$GITHUB_WORKSPACE/lambda-edge/
+            --lambda-edge-artifact-dir=$GITHUB_WORKSPACE/lambda-edge/ \
+            --function-postfix=-$postfix
