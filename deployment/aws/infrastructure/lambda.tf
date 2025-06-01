@@ -35,7 +35,7 @@ EOF
 resource "aws_lambda_function" "check_auth" {
   provider = aws.us-east-1
 
-  function_name = "wiki-check-auth"
+  function_name = "wiki-check-auth-${local.seed_prefix}"
   role          = aws_iam_role.edge_lambda_role.arn
   runtime       = "nodejs20.x"
   handler       = "bundle.handler"
