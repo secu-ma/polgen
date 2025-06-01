@@ -4,7 +4,7 @@
     <em>PolGen policy wiki. Setup in minutes. Create policies using GenAI. Use GitHub PRs as the document control and review process.</em>
 </p>
 <p align="center">
-    <em>Demo at <a href="https://example.com">https://example.com</a></em>
+    <em>Demo at <a href="https://d5j5uiu2d6gl0.cloudfront.net/">https://d5j5uiu2d6gl0.cloudfront.net/</a></em>
 </p>
 
 ---
@@ -21,7 +21,7 @@ the content and package it in a user-friendly Wiki. Use GitHub PR review and app
 
 ## Demo
 
-View our demo deployment at https://example.com.
+View our demo deployment at https://d5j5uiu2d6gl0.cloudfront.net/.
 
 - **username:** user
 - **password:** PolGen-Demo-30
