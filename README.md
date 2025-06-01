@@ -29,17 +29,14 @@ View our demo deployment at https://example.com.
 ## Getting started
 
 - Fork this repo
-- Sign up for Gemini and request an API key (included with Google Workspace).
-- Create an AWS account to deploy your wiki to:
-  - Create an S3 bucket to hold the OpenTofu state. Name it `state-${substr(sha256(<repository name. ex: secu-ma/polgen>), 0, 16)}`
-  - Create an IAM user and create credentials (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)
-- Create the following GitHub secrets for the repository:
+- Create an AWS account to deploy your wiki to.
+- (Recommended) Install and configure the AWS CLI (or boto3).
+- Run `./polgen.py init` and follow the instructions to bootstrap the AWS account.
+- Sign up for Google Gemini and request an API key.
+- Create the following GitHub repository secret:
   - GEMINI_API_KEY
-  - AWS_SECRET_ACCESS_KEY
-- Create the following GitHub variables for the repository:
-  - AWS_ACCESS_KEY_ID
-  - AWS_REGION (ex: eu-west-1)
-  - COGNITO_USER_EMAIL (optional, the email address for a user that will be able to access the Wiki. The user will receive an invitation with a temporary password.)
+- (Optional) Add the following GitHub repository variable:
+  - COGNITO_USER_EMAIL (the email address for a user that will be able to access the Wiki. The user will receive an invitation with a temporary password.)
 - Create a branch from main
 - Edit policies in /policies/ (see /policies/examples/)
 - Push to GitHub
