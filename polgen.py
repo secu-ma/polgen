@@ -60,7 +60,8 @@ CLOUDFORMATION_INIT_TEMPLATE = """{
           "arn:aws:iam::aws:policy/AmazonS3FullAccess",
           "arn:aws:iam::aws:policy/AmazonCognitoPowerUser",
           "arn:aws:iam::aws:policy/CloudFrontFullAccess",
-          "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
+          "arn:aws:iam::aws:policy/AWSLambda_FullAccess",
+          "arn:aws:iam::aws:policy/IAMFullAccess"
         ]
       }
     },
