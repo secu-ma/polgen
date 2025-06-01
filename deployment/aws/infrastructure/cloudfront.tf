@@ -57,7 +57,7 @@ resource "aws_cloudfront_distribution" "wiki_distribution" {
 }
 
 resource "aws_cloudfront_cache_policy" "wiki_cache_policy" {
-  name        = "wiki-policy"
+  name        = "wiki-policy-${local.seed_prefix}"
   default_ttl = 3600
   max_ttl     = 86400
   min_ttl     = 0
@@ -79,7 +79,7 @@ resource "aws_cloudfront_cache_policy" "wiki_cache_policy" {
 }
 
 resource "aws_cloudfront_origin_access_control" "s3_access" {
-  name                              = "wiki-access"
+  name                              = "wiki-access-${local.seed_prefix}"
   description                       = "Access to wiki S3 bucket"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
