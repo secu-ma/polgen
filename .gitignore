@@ -1,6 +1,7 @@
 ### Custom gitignore
 
 deployment/aws/lambda-edge/src/**/bundle.js*
+deployment/aws/infrastructure/.build/**
 
 ### End custom gitignore
 

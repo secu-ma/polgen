@@ -4,7 +4,7 @@
 
 data "archive_file" "check_auth_archive" {
   type        = "zip"
-  output_path = "/tmp/check_auth_archive.zip"
+  output_path = ".build/check_auth_archive.zip"
   source {
     content  = <<EOF
 

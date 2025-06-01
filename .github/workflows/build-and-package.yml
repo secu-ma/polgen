@@ -122,13 +122,15 @@ jobs:
           } || {
             origin_path=""
           }
-          tofu plan -no-color -out=tfplan -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}" -var="origin_path=$origin_path" -var="email=${{ vars.COGNITO_USER_EMAIL }}"
+          tofu plan -no-color -out=.build/tfplan -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}" -var="origin_path=$origin_path" -var="email=${{ vars.COGNITO_USER_EMAIL }}"
 
       - name: Upload Tofu plan
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: ./deployment/aws/infrastructure/tfplan
+          path: |
+            ./deployment/aws/infrastructure/.build/tfplan
+            ./deployment/aws/infrastructure/.build/check_auth_archive.zip
           retention-days: 7
 
   deploy_aws:
@@ -168,6 +170,8 @@ jobs:
       - name: Apply Tofu plan
         working-directory: ./repo/deployment/aws/infrastructure/
         run: |
+          mkdir -p ./.build
+          cp $GITHUB_WORKSPACE/tfplan/check_auth_archive.zip ./.build/check_auth_archive.zip
           tofu apply $GITHUB_WORKSPACE/tfplan/tfplan
 
       - name: Show Tofu Outputs
