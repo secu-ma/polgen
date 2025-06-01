@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 resource "aws_cognito_user_pool" "auth_pool" {
-  name = "wiki_users"
+  name = "wiki_users-${local.seed_prefix}"
 
   admin_create_user_config {
     allow_admin_create_user_only = true

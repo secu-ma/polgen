@@ -15,7 +15,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = var.state_bucket != "" ? var.state_bucket : "state-${local.seed_prefix}"
+    bucket = "state-${local.seed_prefix}"
     key    = var.state_key != "" ? var.state_key : "terraform.tfstate"
   }
 }

@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 resource "aws_s3_bucket" "wiki" {
-  bucket_prefix = "wiki-"
+  bucket = "wiki-${local.seed_prefix}"
 }
 
 resource "aws_s3_bucket_versioning" "wiki_versioning" {
