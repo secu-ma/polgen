@@ -6,7 +6,7 @@ name: Generate new and changed policies
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ demo ]
     paths:
       - 'policies/**'
       - '.github/workflows/generate-changed-policies.yml'
