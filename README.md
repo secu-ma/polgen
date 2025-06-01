@@ -9,6 +9,8 @@
 
 ---
 
+![image](https://github.com/user-attachments/assets/3538465a-df41-4cbb-b1ac-f2b9e20d752a)
+
 Automate the creation of a Company Wiki with policies. Declare your policies in a structured way and let AI generate
 the content and package it in a user-friendly Wiki. Use GitHub PR review and approve workflow to manage document change control.
 
