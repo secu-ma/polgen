@@ -13,7 +13,7 @@ resource "aws_cloudfront_distribution" "wiki_distribution" {
     domain_name              = aws_s3_bucket.wiki.bucket_domain_name
     origin_id                = "s3-wiki"
     origin_access_control_id = aws_cloudfront_origin_access_control.s3_access.id
-    origin_path = var.origin_path
+    origin_path              = var.origin_path
   }
 
   default_cache_behavior {

@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 resource "aws_iam_role" "edge_lambda_role" {
-  name        = "EdgeLambda${local.seed_prefix}"
+  name               = "EdgeLambda${local.seed_prefix}"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 

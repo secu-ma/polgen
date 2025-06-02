@@ -31,7 +31,7 @@ variable "email" {
 }
 
 variable "origin_path" {
-  type = string
-  default = ""
+  type        = string
+  default     = ""
   description = "The path at S3 where the wiki app is deployed. Root if omitted."
 }
