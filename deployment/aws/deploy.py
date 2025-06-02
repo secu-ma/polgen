@@ -23,52 +23,73 @@ def remove_version_from_function_arn(function_arn):
 
 
 def get_cloudfront_config(session, cloudfront_distribution_id):
-    cloudfront_client = session.client('cloudfront')
+    cloudfront_client = session.client("cloudfront")
 
     # Get the current cloudfront config
     result = cloudfront_client.get_distribution_config(
         Id=cloudfront_distribution_id,
     )
-    distribution_config = result['DistributionConfig']
-    etag = result.pop('ETag')
+    distribution_config = result["DistributionConfig"]
+    etag = result.pop("ETag")
     return distribution_config, etag
 
 
-def deploy_edge_lambdas(session_us_east_1, cognito_region, user_pool_id, user_pool_app_id, user_pool_app_secret, user_pool_domain, distribution_config, function_prefix="wiki-", function_postfix="", lambda_edge_artifact_dir=""):
+def deploy_edge_lambdas(
+    session_us_east_1,
+    cognito_region,
+    user_pool_id,
+    user_pool_app_id,
+    user_pool_app_secret,
+    user_pool_domain,
+    distribution_config,
+    function_prefix="wiki-",
+    function_postfix="",
+    lambda_edge_artifact_dir="",
+):
     # Lambda@Edge always lives in us-east-1
-    lambda_client = session_us_east_1.client('lambda')
+    lambda_client = session_us_east_1.client("lambda")
 
     if not lambda_edge_artifact_dir:
         # Build the lambda-edge project
-        subprocess.run(["npm", "run", "build"], cwd=os.path.join(CURRENT_DIR, 'lambda-edge'), check=True, capture_output=True)
-        lambda_edge_artifact_dir = os.path.join(CURRENT_DIR, 'lambda-edge', 'src')
+        subprocess.run(
+            ["npm", "run", "build"],
+            cwd=os.path.join(CURRENT_DIR, "lambda-edge"),
+            check=True,
+            capture_output=True,
+        )
+        lambda_edge_artifact_dir = os.path.join(CURRENT_DIR, "lambda-edge", "src")
 
     # Deploy each lambda function (there is currently only one, but multiple is supported)
     nonce_signing_secret = secrets.token_urlsafe(64)
     for root, dirs, files in os.walk(lambda_edge_artifact_dir):
-        if 'bundle.js' not in files:
+        if "bundle.js" not in files:
             continue
 
         relpath = os.path.relpath(root, lambda_edge_artifact_dir)
-        bundle_relpath = os.path.join(relpath, 'bundle.js')
+        bundle_relpath = os.path.join(relpath, "bundle.js")
         print("Creating deployment package for: ", bundle_relpath)
 
         zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-            zip_file.write(os.path.join(root, 'bundle.js'), 'bundle.js')
-            zip_file.writestr("config.json", json.dumps({
-                "region": cognito_region,
-                "userPoolId": user_pool_id,
-                "userPoolAppId": user_pool_app_id,
-                "userPoolAppSecret": user_pool_app_secret,
-                "userPoolDomain": user_pool_domain,
-                "httpOnly": True,
-                "sameSite": "Lax",
-                "csrfProtection": {
-                    "nonceSigningSecret": nonce_signing_secret,
-                },
-                "logLevel": "debug",
-            }))
+        with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+            zip_file.write(os.path.join(root, "bundle.js"), "bundle.js")
+            zip_file.writestr(
+                "config.json",
+                json.dumps(
+                    {
+                        "region": cognito_region,
+                        "userPoolId": user_pool_id,
+                        "userPoolAppId": user_pool_app_id,
+                        "userPoolAppSecret": user_pool_app_secret,
+                        "userPoolDomain": user_pool_domain,
+                        "httpOnly": True,
+                        "sameSite": "Lax",
+                        "csrfProtection": {
+                            "nonceSigningSecret": nonce_signing_secret,
+                        },
+                        "logLevel": "debug",
+                    }
+                ),
+            )
         zip_buffer.seek(0)
 
         print("Deploying to lambda...")
@@ -87,11 +108,13 @@ def deploy_edge_lambdas(session_us_east_1, cognito_region, user_pool_id, user_po
         print("Function is now active")
 
         # Updating cloudfront distribution config with updated lambda arn
-        cache_behaviors = distribution_config.get('CacheBehaviors', {}).get('Items', [])
-        default_cache_behavior = distribution_config['DefaultCacheBehavior']
+        cache_behaviors = distribution_config.get("CacheBehaviors", {}).get("Items", [])
+        default_cache_behavior = distribution_config["DefaultCacheBehavior"]
         for cache_behavior in cache_behaviors + [default_cache_behavior]:
             for association in cache_behavior["LambdaFunctionAssociations"]["Items"]:
-                if remove_version_from_function_arn(association["LambdaFunctionARN"]) == remove_version_from_function_arn(arn):
+                if remove_version_from_function_arn(
+                    association["LambdaFunctionARN"]
+                ) == remove_version_from_function_arn(arn):
                     association["LambdaFunctionARN"] = arn
 
     return distribution_config
@@ -105,7 +128,13 @@ def get_current_wiki_version(distribution_config):
     return origin_path
 
 
-def deploy_s3_wiki(session, s3_bucket, distribution_config, build_path='../../wiki/dist', wiki_artifact_dir=""):
+def deploy_s3_wiki(
+    session,
+    s3_bucket,
+    distribution_config,
+    build_path="../../wiki/dist",
+    wiki_artifact_dir="",
+):
     version_old = get_current_wiki_version(distribution_config)
     version_new = datetime.datetime.now().replace(microsecond=0).isoformat()
     print("Current wiki version:", version_old)
@@ -117,8 +146,8 @@ def deploy_s3_wiki(session, s3_bucket, distribution_config, build_path='../../wi
         wiki_artifact_dir = build_path_abs
 
     # Upload build to S3 bucket as new version
-    s3 = session.client('s3')
-    print(f'Start S3 upload of version {version_new} to {s3_bucket}')
+    s3 = session.client("s3")
+    print(f"Start S3 upload of version {version_new} to {s3_bucket}")
     for root, dirs, files in os.walk(wiki_artifact_dir):
         for filename in files:
             local_path = os.path.join(root, filename)
@@ -127,14 +156,9 @@ def deploy_s3_wiki(session, s3_bucket, distribution_config, build_path='../../wi
             mimetype = mimetypes.guess_type(local_path)[0]
             extra_args = {}
             if mimetype:
-                extra_args['ContentType'] = mimetype
-            print(f'Uploading {local_path} to {s3_path} with content-type {mimetype}')
-            s3.upload_file(
-                local_path,
-                s3_bucket,
-                s3_path,
-                ExtraArgs=extra_args
-            )
+                extra_args["ContentType"] = mimetype
+            print(f"Uploading {local_path} to {s3_path} with content-type {mimetype}")
+            s3.upload_file(local_path, s3_bucket, s3_path, ExtraArgs=extra_args)
 
     # Serve new version on cloudfront
     new_path = version_new if version_new.startswith("/") else f"/{version_new}"
@@ -142,8 +166,15 @@ def deploy_s3_wiki(session, s3_bucket, distribution_config, build_path='../../wi
     return distribution_config
 
 
-def update_cloudfront(session, cloudfront_distribution_id, distribution_config, etag, wait=True, invalidate=True):
-    cloudfront_client = session.client('cloudfront')
+def update_cloudfront(
+    session,
+    cloudfront_distribution_id,
+    distribution_config,
+    etag,
+    wait=True,
+    invalidate=True,
+):
+    cloudfront_client = session.client("cloudfront")
 
     print("Deploying to cloudfront...")
     cloudfront_client.update_distribution(
@@ -154,7 +185,7 @@ def update_cloudfront(session, cloudfront_distribution_id, distribution_config, 
     print("Cloudfront distribution config pushed", cloudfront_distribution_id)
     if wait:
         print("Waiting for cloudfront deployment to finish")
-        waiter = cloudfront_client.get_waiter('distribution_deployed')
+        waiter = cloudfront_client.get_waiter("distribution_deployed")
         waiter.wait(Id=cloudfront_distribution_id)
         print("Cloudfront update done")
     if invalidate:
@@ -162,22 +193,35 @@ def update_cloudfront(session, cloudfront_distribution_id, distribution_config, 
         result = cloudfront_client.create_invalidation(
             DistributionId=cloudfront_distribution_id,
             InvalidationBatch={
-                'Paths': {
-                    'Quantity': 1,
-                    'Items': [
-                        "/*"
-                    ]
-                },
-                'CallerReference': datetime.datetime.now().isoformat(),
-            }
+                "Paths": {"Quantity": 1, "Items": ["/*"]},
+                "CallerReference": datetime.datetime.now().isoformat(),
+            },
         )
-        waiter = cloudfront_client.get_waiter('invalidation_completed')
-        waiter.wait(DistributionId=cloudfront_distribution_id, Id=result['Invalidation']['Id'])
+        waiter = cloudfront_client.get_waiter("invalidation_completed")
+        waiter.wait(
+            DistributionId=cloudfront_distribution_id, Id=result["Invalidation"]["Id"]
+        )
         print("Cloudfront invalidation done")
 
 
-def main(session, session_us_east_1, cognito_region, user_pool_id, user_pool_app_id, user_pool_app_secret, user_pool_domain, cloudfront_distribution_id, wiki_bucket, function_prefix="wiki-", function_postfix="", lambda_edge_artifact_dir="", wiki_artifact_dir=""):
-    distribution_config, etag = get_cloudfront_config(session=session, cloudfront_distribution_id=cloudfront_distribution_id)
+def main(
+    session,
+    session_us_east_1,
+    cognito_region,
+    user_pool_id,
+    user_pool_app_id,
+    user_pool_app_secret,
+    user_pool_domain,
+    cloudfront_distribution_id,
+    wiki_bucket,
+    function_prefix="wiki-",
+    function_postfix="",
+    lambda_edge_artifact_dir="",
+    wiki_artifact_dir="",
+):
+    distribution_config, etag = get_cloudfront_config(
+        session=session, cloudfront_distribution_id=cloudfront_distribution_id
+    )
     distribution_config = deploy_edge_lambdas(
         session_us_east_1=session_us_east_1,
         cognito_region=cognito_region,
@@ -204,6 +248,7 @@ def main(session, session_us_east_1, cognito_region, user_pool_id, user_pool_app
         wait=True,
         invalidate=False,
     )
+
 
 if __name__ == "__main__":
     try:

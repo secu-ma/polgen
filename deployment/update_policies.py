@@ -20,7 +20,12 @@ ai_service = None
 
 def get_changed_files(base_ref: str) -> list[str]:
     try:
-        result = subprocess.run(["git", "diff", "--name-only", base_ref], check=True, capture_output=True, text=True)
+        result = subprocess.run(
+            ["git", "diff", "--name-only", base_ref],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
     except subprocess.CalledProcessError as e:
         logger.exception(f"Failed to get changed files\n\n{e.stdout}\n\n{e.stderr}")
         raise
@@ -28,7 +33,11 @@ def get_changed_files(base_ref: str) -> list[str]:
 
 
 def filter_policies(changed_files: list[str]) -> list[str]:
-    return [file for file in changed_files if file.startswith("policies/") and file.endswith(".json")]
+    return [
+        file
+        for file in changed_files
+        if file.startswith("policies/") and file.endswith(".json")
+    ]
 
 
 def get_system_prompt():
@@ -44,9 +53,15 @@ class GoogleGenAI:
         except ImportError:
             logger.info("Installing Google genai")
             # Dynamic installation of google genai library
-            subprocess.run(["pip", "install", "google-genai==1.16.1"], check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["pip", "install", "google-genai==1.16.1"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
             from google import genai
             from google.genai import types
+
             logger.info("Google genai library installed")
         self.model = "gemini-2.5-flash-preview-05-20"
         self.client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
@@ -56,9 +71,7 @@ class GoogleGenAI:
     def generate(self, system, policy):
         generate_content_config = self.types.GenerateContentConfig(
             response_mime_type="text/plain",
-            system_instruction=[
-                self.types.Part.from_text(text=system)
-            ]
+            system_instruction=[self.types.Part.from_text(text=system)],
         )
         contents = [
             self.types.Content(
@@ -76,6 +89,7 @@ class GoogleGenAI:
         ):
             document += chunk.text
         return document
+
 
 def get_ai_service():
     # TODO: Read from config which genai service to use

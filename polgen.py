@@ -112,7 +112,12 @@ def request_confirmation(message: str) -> bool:
 
 def get_git_repo_name():
     try:
-        result = subprocess.run([os_cmd("git"), "remote", "get-url", "origin"], check=True, capture_output=True, text=True)
+        result = subprocess.run(
+            [os_cmd("git"), "remote", "get-url", "origin"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
     except subprocess.CalledProcessError:
         logger.debug("Unable to get git repo name", exc_info=True)
         return ""
@@ -134,9 +139,12 @@ def get_postfix(unique_seed: str) -> str:
 def is_boto3_available() -> bool:
     return boto3 is not None
 
+
 def is_aws_cli_available() -> bool:
     try:
-        result = subprocess.run([os_cmd("aws"), "--version"], check=True, capture_output=True, text=True)
+        result = subprocess.run(
+            [os_cmd("aws"), "--version"], check=True, capture_output=True, text=True
+        )
     except subprocess.CalledProcessError:
         return False
     return result.stdout.strip().startswith("aws-cli")
@@ -180,6 +188,7 @@ class AWSCommandError(Exception):
         self.code = code
         self.detail = detail
 
+
 def aws_command(service: str, cmd: str, kwargs: dict[str, Any]) -> dict[str, Any]:
     if is_boto3_available():
         client = boto3.client(service)
@@ -187,9 +196,11 @@ def aws_command(service: str, cmd: str, kwargs: dict[str, Any]) -> dict[str, Any
             return getattr(client, cmd)(**kwargs)
         except botocore.exceptions.ClientError as e:
             message = f"An error occurred ({e.response['Error']['Code']}) when calling the {e.operation_name} operation: {e.response['Error']['Message']}"
-            raise AWSCommandError(message, e.response["Error"]["Code"], e.response["Error"]["Message"]) from e
+            raise AWSCommandError(
+                message, e.response["Error"]["Code"], e.response["Error"]["Message"]
+            ) from e
     else:
-        pattern = re.compile(r'(?<!^)(?=[A-Z])')
+        pattern = re.compile(r"(?<!^)(?=[A-Z])")
 
         with process_special_aws_kwargs(kwargs) as args:
             args += [
@@ -198,13 +209,25 @@ def aws_command(service: str, cmd: str, kwargs: dict[str, Any]) -> dict[str, Any
             ]
             cmd = cmd.replace("_", "-")
             try:
-                result = subprocess.run([os_cmd("aws"), service, cmd, *args, "--output=json"], check=True, capture_output=True, text=True)
+                result = subprocess.run(
+                    [os_cmd("aws"), service, cmd, *args, "--output=json"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
             except subprocess.CalledProcessError as e:
                 error_message = e.stderr.strip()
-                if e.returncode == 254 and error_message.startswith("An error occurred"):
-                    error_match = re.match(r"^An error occurred \((.+)\) when calling the \w+ operation: (.*)$", error_message)
+                if e.returncode == 254 and error_message.startswith(
+                    "An error occurred"
+                ):
+                    error_match = re.match(
+                        r"^An error occurred \((.+)\) when calling the \w+ operation: (.*)$",
+                        error_message,
+                    )
                     if error_match:
-                        raise AWSCommandError(error_message, error_match.group(1), error_match.group(2)) from e
+                        raise AWSCommandError(
+                            error_message, error_match.group(1), error_match.group(2)
+                        ) from e
                 raise
         return json.loads(result.stdout.strip())
 
@@ -238,7 +261,8 @@ def get_bootstrap_stack(postfix: str):
 def create_bootstrap_stack(postfix: str, wait_until_created=True):
     kwargs = {
         "StackName": get_bootstrap_stack_name(postfix),
-        "TemplateBody": CLOUDFORMATION_INIT_TEMPLATE % {
+        "TemplateBody": CLOUDFORMATION_INIT_TEMPLATE
+        % {
             "postfix": postfix,
         },
         "Capabilities": ["CAPABILITY_IAM"],
@@ -246,7 +270,7 @@ def create_bootstrap_stack(postfix: str, wait_until_created=True):
     result = aws_command("cloudformation", "create_stack", kwargs)
     if wait_until_created:
         if is_boto3_available():
-            waiter = boto3.client("cloudformation").get_waiter('stack_create_complete')
+            waiter = boto3.client("cloudformation").get_waiter("stack_create_complete")
             waiter.wait(StackName=result["StackId"])
         else:
             for i in range(120):
@@ -256,13 +280,18 @@ def create_bootstrap_stack(postfix: str, wait_until_created=True):
                 if stack["StackStatus"] == "CREATE_COMPLETE":
                     break
                 if stack["StackStatus"] != "CREATE_IN_PROGRESS":
-                    raise Exception(f"Stack {stack['StackId']} creation failed in state {stack['StackStatus']}")
+                    raise Exception(
+                        f"Stack {stack['StackId']} creation failed in state {stack['StackStatus']}"
+                    )
 
 
-def update_bootstrap_stack(postfix: str, stack: dict[str, Any], wait_until_updated=True):
+def update_bootstrap_stack(
+    postfix: str, stack: dict[str, Any], wait_until_updated=True
+):
     kwargs = {
         "StackName": stack["StackId"],
-        "TemplateBody": CLOUDFORMATION_INIT_TEMPLATE % {
+        "TemplateBody": CLOUDFORMATION_INIT_TEMPLATE
+        % {
             "postfix": postfix,
         },
         "Capabilities": ["CAPABILITY_IAM"],
@@ -271,13 +300,15 @@ def update_bootstrap_stack(postfix: str, stack: dict[str, Any], wait_until_updat
     try:
         result = aws_command("cloudformation", "update_stack", kwargs)
     except AWSCommandError as e:
-        if e.code != "ValidationError" or not e.detail.startswith("No updates are to be performed"):
+        if e.code != "ValidationError" or not e.detail.startswith(
+            "No updates are to be performed"
+        ):
             raise
         print("Stack is up to date")
 
     if result and wait_until_updated:
         if is_boto3_available():
-            waiter = boto3.client("cloudformation").get_waiter('stack_update_complete')
+            waiter = boto3.client("cloudformation").get_waiter("stack_update_complete")
             waiter.wait(StackName=result["StackId"])
         else:
             for i in range(120):
@@ -286,8 +317,13 @@ def update_bootstrap_stack(postfix: str, stack: dict[str, Any], wait_until_updat
                 stack = get_bootstrap_stack(postfix)
                 if stack["StackStatus"] == "UPDATE_COMPLETE":
                     break
-                if stack["StackStatus"] not in {"UPDATE_IN_PROGRESS", "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS"}:
-                    logger.debug(f"Stack {stack['StackId']} update failed in state {stack['StackStatus']}")
+                if stack["StackStatus"] not in {
+                    "UPDATE_IN_PROGRESS",
+                    "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
+                }:
+                    logger.debug(
+                        f"Stack {stack['StackId']} update failed in state {stack['StackStatus']}"
+                    )
                     raise Exception(f"Stack {stack['StackId']} update failed")
 
 
@@ -302,7 +338,12 @@ def get_aws_region() -> str:
     if is_boto3_available():
         return boto3.session.Session().region_name
     else:
-        result = subprocess.run(["aws", "configure", "get", "region"], check=True, capture_output=True, text=True)
+        result = subprocess.run(
+            ["aws", "configure", "get", "region"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         return result.stdout.strip()
 
 
@@ -320,8 +361,12 @@ def init(args):
     # 8) Otherwise, print instructions for user to perform it themselves
     repo_name = get_git_repo_name()
     if not repo_name:
-        print("Unable to get git repo name. Are you running this in a git cloned repo directory?")
-        repo_name = input("Please enter the GitHub repo name in the format \"<user/company name>/<repo name>\"")
+        print(
+            "Unable to get git repo name. Are you running this in a git cloned repo directory?"
+        )
+        repo_name = input(
+            'Please enter the GitHub repo name in the format "<user/company name>/<repo name>"'
+        )
         if len(repo_name.split("/")) != 2:
             print("Not a valid repo name. Aborting...")
             sys.exit(1)
@@ -330,7 +375,9 @@ def init(args):
         repo_branch = "main"
     postfix = get_postfix(f"{repo_name}/{repo_branch}")
     if not is_aws_interface_available():
-        print("We cannot interface with AWS. Either install and configure the AWS CLI or install Boto3.")
+        print(
+            "We cannot interface with AWS. Either install and configure the AWS CLI or install Boto3."
+        )
         sys.exit(1)
 
     if is_aws_interface_available():
@@ -345,7 +392,9 @@ def init(args):
                 print("Skipping stack update...")
         else:
             print("Bootstrap stack does not exist.")
-            if request_confirmation(f"Create a new bootstrap stack in account {aws_account_id}?"):
+            if request_confirmation(
+                f"Create a new bootstrap stack in account {aws_account_id}?"
+            ):
                 print("Creating a new bootstrap stack...")
                 create_bootstrap_stack(postfix)
 
@@ -363,27 +412,46 @@ def init(args):
         print(f"  AWS_REGION: {get_aws_region()}")
         print("")
     else:
-        print("Unable to automatically interface with AWS because neither Boto3 nor the AWS CLI is available.")
-        print("Use the following CloudFormation template to create or update your stack manually:")
-        print(CLOUDFORMATION_INIT_TEMPLATE % {
-            "postfix": postfix,
-        })
-        print("Then create/update the following GitHub \033[1msecret\033[0m with the Output from the Stack:")
+        print(
+            "Unable to automatically interface with AWS because neither Boto3 nor the AWS CLI is available."
+        )
+        print(
+            "Use the following CloudFormation template to create or update your stack manually:"
+        )
+        print(
+            CLOUDFORMATION_INIT_TEMPLATE
+            % {
+                "postfix": postfix,
+            }
+        )
+        print(
+            "Then create/update the following GitHub \033[1msecret\033[0m with the Output from the Stack:"
+        )
         print("")
         print("  AWS_SECRET_ACCESS_KEY")
         print("")
-        print("And also create/update the following GitHub \033[1mvariables\033[0m with the Output from the Stack:")
+        print(
+            "And also create/update the following GitHub \033[1mvariables\033[0m with the Output from the Stack:"
+        )
         print("")
         print("  AWS_ACCESS_KEY_ID")
         print("  AWS_REGION")
         print("")
     print("PolGen init done.")
 
+
 def main():
     parser = argparse.ArgumentParser()
 
-    subparsers = parser.add_subparsers(required=True, title="commands", description="Different commands that can be executed")
-    parser_init = subparsers.add_parser("init", help="Initialize the GitHub and AWS accounts after having forked the repo")
+    subparsers = parser.add_subparsers(
+        required=True,
+        title="commands",
+        description="Different commands that can be executed",
+    )
+    parser_init = subparsers.add_parser(
+        "init",
+        help="Initialize the GitHub and AWS accounts after having forked the repo",
+    )
     parser_init.add_argument("--verbose", "-v", action="store_true")
     parser_init.set_defaults(func=init)
 
