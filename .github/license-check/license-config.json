@@ -1,0 +1,22 @@
+[
+    {
+        "include": ["**/*.py"],
+        "license": "./.github/license-check/header-ETH-MPLv2-hashtag.txt"
+    },
+    {
+        "include": [
+          "**/*.tf",
+          "**/*.hcl"
+        ],
+        "license": "./.github/license-check/header-ETH-MPLv2-hashtag.txt"
+    },
+    {
+        "include": [
+          "deployment/aws/lambda-edge/**/*.ts"
+        ],
+        "exclude": [
+          "deployment/aws/lambda-edge/node_modules/**"
+        ],
+        "license": "./.github/license-check/header-ETH-MPLv2.txt"
+    }
+]
