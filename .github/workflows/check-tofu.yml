@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'deployment/aws/**'
+      - 'deployment/aws/infrastructure/**'
       - '.github/workflows/check-tofu.yml'
 
 jobs:
