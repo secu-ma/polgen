@@ -41,7 +41,7 @@
         "/.+\\.tf$/"
       ],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\s*runtime\\s*=\\s*\"python(?<currentValue>\\d+)\\.x\""
+        "#\\s*renovate:\\s*datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\s*runtime\\s*=\\s*\"nodejs(?<currentValue>\\d+)\\.x\""
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{/if}}"
     }
