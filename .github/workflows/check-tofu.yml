@@ -1,0 +1,36 @@
+name: Check Tofu infrastructure on PR
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'deployment/aws/**'
+      - '.github/workflows/check-tofu.yml'
+
+jobs:
+  build_wiki:
+    runs-on: ubuntu-latest
+    name: "Test Tofu"
+    defaults:
+      run:
+        working-directory: ./deployment/aws/infrastructure
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID_QA }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_QA }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_wrapper: false
+
+      - name: OpenTofu Init
+        run: tofu init -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}#qa"
+
+      - name: OpenTofu Test
+        id: plan
+        run: |
+          tofu test -var="unique_seed=${{ github.repository }}/${{ github.ref_name }}#qa" -var="origin_path="
