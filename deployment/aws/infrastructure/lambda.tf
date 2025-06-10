@@ -37,6 +37,7 @@ resource "aws_lambda_function" "check_auth" {
 
   function_name = "wiki-check-auth-${local.seed_prefix}"
   role          = aws_iam_role.edge_lambda_role.arn
+  # renovate: datasource=endoflife-date depName=aws-lambda versioning=loose
   runtime       = "nodejs20.x"
   handler       = "bundle.handler"
 
