@@ -1,0 +1,16 @@
+when:
+  - event: cron
+    cron: renovate
+
+skip_clone: true
+
+steps:
+  - name: Run renovate
+    image: renovate/renovate:40.49
+    environment:
+      RENOVATE_AUTODISCOVER: false
+      RENOVATE_REPOSITORIES: "secu-ma/polgen"
+      RENOVATE_GIT_AUTHOR: 'Renovate Bot <renovate@secuma.be>'
+      RENOVATE_PLATFORM: 'github'
+      RENOVATE_TOKEN:
+        from_secret: RENOVATE_BOT_TOKEN
