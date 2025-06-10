@@ -16,7 +16,7 @@
   "devDependencies": {
     "@types/node": "20.19.0",
     "@types/aws-lambda": "8.10.149",
-    "html-loader": "3.1.2",
+    "html-loader": "5.1.0",
     "prettier": "2.8.8",
     "terser-webpack-plugin": "5.3.14",
     "ts-loader": "9.5.2",
