@@ -28,9 +28,5 @@
   "dependencies": {
     "@tsconfig/node20": "^20.1.2",
     "cognito-at-edge": "^1.5.3"
-  },
-  "prettier": {
-    "trailingComma": "es5",
-    "tabWidth": 2
   }
 }
