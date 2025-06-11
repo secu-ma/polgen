@@ -374,11 +374,6 @@ def init(args):
     if not repo_branch:
         repo_branch = "main"
     postfix = get_postfix(f"{repo_name}/{repo_branch}")
-    if not is_aws_interface_available():
-        print(
-            "We cannot interface with AWS. Either install and configure the AWS CLI or install Boto3."
-        )
-        sys.exit(1)
 
     if is_aws_interface_available():
         aws_account_id = get_aws_account_id()
