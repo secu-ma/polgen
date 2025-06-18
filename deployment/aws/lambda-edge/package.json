@@ -14,7 +14,7 @@
   "keywords": [],
   "author": "",
   "devDependencies": {
-    "@types/node": "22.15.31",
+    "@types/node": "22.15.32",
     "@types/aws-lambda": "8.10.150",
     "html-loader": "5.1.0",
     "prettier": "3.5.3",
