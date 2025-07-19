@@ -15,7 +15,7 @@
   "author": "",
   "devDependencies": {
     "@types/node": "22.16.4",
-    "@types/aws-lambda": "8.10.150",
+    "@types/aws-lambda": "8.10.152",
     "html-loader": "5.1.0",
     "prettier": "3.6.2",
     "terser-webpack-plugin": "5.3.14",
