@@ -13,7 +13,7 @@ jobs:
     name: "Check license headers"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Check license headers
         uses: viperproject/check-license-header@v2
         with:
