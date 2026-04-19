@@ -106,7 +106,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1
+        uses: opentofu/setup-opentofu@v2
         with:
           tofu_wrapper: false
 
@@ -148,7 +148,7 @@ jobs:
           path: ./repo
 
       - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1
+        uses: opentofu/setup-opentofu@v2
         with:
           tofu_wrapper: false
 
